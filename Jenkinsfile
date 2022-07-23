@@ -6,6 +6,7 @@ pipeline {
         stage('build app') {
             steps {
                script {
+                   mvn --version
                    echo "building the application..."
                }
             }
