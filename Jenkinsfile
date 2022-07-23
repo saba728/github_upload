@@ -1,33 +1,34 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'maven:3.8.1-adoptopenjdk-11'
+            args '-v /root/.m2:/root/.m2'
+        }
+    }
+    options {
+        skipStagesAfterUnstable()
+    }
     stages {
-        stage('build app') {
+        stage('Build') {
             steps {
-               script {
-                  sh "mvn clean verify"
-                   echo "building the application..."
-               }
+                sh 'mvn -B -DskipTests clean package'
             }
         }
-        stage('build image') {
+        stage('Test') {
             steps {
-                script {
-                    echo "building the docker image..."
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
                 }
             }
         }
-        stage('deploy') {
-            environment {
-               AWS_ACCESS_KEY_ID = credentials('jenkins_aws_access_key_id')
-               AWS_SECRET_ACCESS_KEY = credentials('jenkins_aws_secret_access_key')
-            }
+        stage('Deliver') { 
             steps {
-                script {
-                   echo 'deploying docker image...'
-                   sh 'kubectl create deployment nginx-deployment --image=nginx'
-                }
+                sh './jenkins/scripts/deliver.sh' 
             }
         }
     }
