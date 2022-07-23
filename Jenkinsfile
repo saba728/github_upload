@@ -6,7 +6,7 @@ pipeline {
         stage('build app') {
             steps {
                script {
-                   mvn --version
+                  sh "mvn clean verify"
                    echo "building the application..."
                }
             }
